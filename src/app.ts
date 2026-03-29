@@ -3,15 +3,14 @@ import express, { type NextFunction, type Request, type Response } from "express
 import swaggerUi from "swagger-ui-express";
 import connectDB from "./config/db";
 import swaggerSpec from "./config/swagger";
-
-const errorHandler = require("./middleware/errorHandler");
-const authRoutes = require("./routes/auth.routes");
-const categoryRoutes = require("./routes/category.routes");
-const productRoutes = require("./routes/product.routes");
-const orderRoutes = require("./routes/order.routes");
-const dashboardRoutes = require("./routes/dashboard.routes");
-const restockRoutes = require("./routes/restock.routes");
-const logsRoutes = require("./routes/logs.routes");
+import errorHandler from "./middleware/errorHandler";
+import authRoutes from "./routes/auth.routes";
+import categoryRoutes from "./routes/category.routes";
+import dashboardRoutes from "./routes/dashboard.routes";
+import logsRoutes from "./routes/logs.routes";
+import orderRoutes from "./routes/order.routes";
+import productRoutes from "./routes/product.routes";
+import restockRoutes from "./routes/restock.routes";
 
 const allowedOrigins = (process.env.CLIENT_URL || "")
   .split(",")
