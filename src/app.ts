@@ -53,7 +53,12 @@ export function createApp() {
     }),
   );
 
-  app.use(async (_req: Request, _res: Response, next: NextFunction) => {
+  app.use(async (req: Request, _res: Response, next: NextFunction) => {
+    // Keep docs/health available even if DB is temporarily unavailable.
+    if (req.path === "/" || req.path.startsWith("/api/docs")) {
+      return next();
+    }
+
     try {
       await ensureDbConnection();
       next();
