@@ -5,6 +5,9 @@
 - Backend API: [Render URL here]
 - Demo credentials: demo@test.com / demo123
 
+## API Docs (Swagger)
+- Swagger UI: /api/docs
+
 ## Features
 - JWT Authentication with demo login
 - Product & category management
@@ -46,7 +49,15 @@
    ```bash
    npm run dev
    ```
-5. Backend runs at:
+5. Build TypeScript:
+   ```bash
+   npm run build
+   ```
+6. Run production build:
+   ```bash
+   npm start
+   ```
+7. Backend runs at:
    ```text
    http://localhost:5000
    ```
