@@ -9,7 +9,7 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: process.env.API_BASE_URL || "http://localhost:5000",
+      url: process.env.API_BASE_URL || "https://inventory-backend-sage.vercel.app/",
       description: "Current API server",
     },
   ],

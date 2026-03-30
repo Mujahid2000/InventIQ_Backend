@@ -1,6 +1,5 @@
 import cors from "cors";
 import express, { type NextFunction, type Request, type Response } from "express";
-import swaggerUi from "swagger-ui-express";
 import connectDB from "./config/db";
 import swaggerSpec from "./config/swagger";
 import errorHandler from "./middleware/errorHandler";
@@ -66,7 +65,50 @@ export function createApp() {
     }
   });
 
-  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: true }));
+  app.get("/api/docs/swagger.json", (_req: Request, res: Response) => {
+    res.json(swaggerSpec);
+  });
+
+  const swaggerHtml = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Docs</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+    <style>
+      html, body { margin: 0; padding: 0; background: #0b1020; }
+      #swagger-ui { max-width: 1200px; margin: 0 auto; }
+    </style>
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    <script>
+      window.onload = function () {
+        window.ui = SwaggerUIBundle({
+          url: '/api/docs/swagger.json',
+          dom_id: '#swagger-ui',
+          deepLinking: true,
+          presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIStandalonePreset
+          ],
+          layout: 'BaseLayout'
+        });
+      };
+    </script>
+  </body>
+</html>`;
+
+  app.get("/api/docs", (_req: Request, res: Response) => {
+    res.type("html").send(swaggerHtml);
+  });
+
+  app.get("/api/docs/", (_req: Request, res: Response) => {
+    res.type("html").send(swaggerHtml);
+  });
 
   app.use("/api/auth", authRoutes);
   app.use("/api/categories", categoryRoutes);
