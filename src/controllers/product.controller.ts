@@ -1,33 +1,27 @@
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 import type { HydratedDocument } from "mongoose";
 import ActivityLog from "../models/ActivityLog";
 import Product, { type IProduct } from "../models/Product";
 import RestockQueue from "../models/RestockQueue";
+import ApiError from "../utils/ApiError";
+import ApiResponse from "../utils/ApiResponse";
+import AsyncHandler from "../utils/AsyncHandler";
 
-export const getAll = async (_req: Request, res: Response, next: NextFunction) => {
-  try {
-    const products = await Product.find().populate("category");
-    res.json(products);
-  } catch (err) {
-    next(err);
+export const getAll = AsyncHandler(async (_req: Request, res: Response) => {
+  const products = await Product.find().populate("category");
+  res.json(new ApiResponse(200, products, "Products fetched successfully"));
+});
+
+export const getOne = AsyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const product = await Product.findById(id).populate("category");
+
+  if (!product) {
+    throw new ApiError(404, "Product not found");
   }
-};
 
-export const getOne = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const product = await Product.findById(id).populate("category");
-
-    if (!product) {
-      res.status(404);
-      return next(new Error("Product not found"));
-    }
-
-    res.json(product);
-  } catch (err) {
-    next(err);
-  }
-};
+  res.json(new ApiResponse(200, product, "Product fetched successfully"));
+});
 
 const postSaveChecks = async (product: HydratedDocument<IProduct>, req: Request): Promise<void> => {
   if (product.stockQuantity === 0) {
@@ -48,80 +42,66 @@ const postSaveChecks = async (product: HydratedDocument<IProduct>, req: Request)
   }
 };
 
-export const create = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const data = req.body as Partial<IProduct>;
-    let product = new Product(data);
+export const create = AsyncHandler(async (req: Request, res: Response) => {
+  const data = req.body as Partial<IProduct>;
+  let product = new Product(data);
 
-    await postSaveChecks(product, req);
-    product = await product.save();
+  await postSaveChecks(product, req);
+  product = await product.save();
 
-    await ActivityLog.create({
-      user: req.user?._id,
-      action: "create_product",
-      entityType: "Product",
-      entityId: product._id,
-      details: { name: product.name },
-    });
+  await ActivityLog.create({
+    user: req.user?._id,
+    action: "create_product",
+    entityType: "Product",
+    entityId: product._id,
+    details: { name: product.name },
+  });
 
-    res.status(201).json(product);
-  } catch (err) {
-    next(err);
+  res.status(201).json(new ApiResponse(201, product, "Product created successfully"));
+});
+
+export const update = AsyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const data = req.body as Partial<IProduct>;
+
+  let product = await Product.findById(id);
+  if (!product) {
+    throw new ApiError(404, "Product not found");
   }
-};
 
-export const update = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const data = req.body as Partial<IProduct>;
+  Object.assign(product, data);
 
-    let product = await Product.findById(id);
-    if (!product) {
-      res.status(404);
-      return next(new Error("Product not found"));
-    }
+  await postSaveChecks(product, req);
+  product = await product.save();
 
-    Object.assign(product, data);
+  await ActivityLog.create({
+    user: req.user?._id,
+    action: "update_product",
+    entityType: "Product",
+    entityId: product._id,
+    details: { name: product.name },
+  });
 
-    await postSaveChecks(product, req);
-    product = await product.save();
+  res.json(new ApiResponse(200, product, "Product updated successfully"));
+});
 
-    await ActivityLog.create({
-      user: req.user?._id,
-      action: "update_product",
-      entityType: "Product",
-      entityId: product._id,
-      details: { name: product.name },
-    });
+export const remove = AsyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const product = await Product.findById(id);
 
-    res.json(product);
-  } catch (err) {
-    next(err);
+  if (!product) {
+    throw new ApiError(404, "Product not found");
   }
-};
 
-export const remove = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const product = await Product.findById(id);
+  await product.deleteOne();
 
-    if (!product) {
-      res.status(404);
-      return next(new Error("Product not found"));
-    }
+  await ActivityLog.create({
+    user: req.user?._id,
+    action: "delete_product",
+    entityType: "Product",
+    entityId: product._id,
+    details: { name: product.name },
+  });
 
-    await product.deleteOne();
-
-    await ActivityLog.create({
-      user: req.user?._id,
-      action: "delete_product",
-      entityType: "Product",
-      entityId: product._id,
-      details: { name: product.name },
-    });
-
-    res.json({ message: "Product deleted" });
-  } catch (err) {
-    next(err);
-  }
-};
+  res.json(new ApiResponse(200, null, "Product deleted"));
+});
