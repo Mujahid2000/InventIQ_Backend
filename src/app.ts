@@ -66,11 +66,7 @@ export function createApp() {
     }
   });
 
-  app.get("/api/docs", (_req: Request, res: Response) => {
-    res.redirect(302, "/api/docs/");
-  });
-
-  app.use("/api/docs/", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: true }));
+  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: true }));
 
   app.use("/api/auth", authRoutes);
   app.use("/api/categories", categoryRoutes);
@@ -81,7 +77,7 @@ export function createApp() {
   app.use("/api/logs", logsRoutes);
 
   app.get("/", (_req: Request, res: Response) => {
-    res.json({ message: "API is running", docs: "/api/docs/" });
+    res.json({ message: "API is running", docs: "/api/docs" });
   });
 
   app.use(errorHandler);
